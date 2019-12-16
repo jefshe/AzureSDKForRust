@@ -1,10 +1,9 @@
 use crate::{enumerations::ParsingError, range::ParseError};
 use base64;
 use chrono;
-use futures_util::TryStreamExt;
 use http;
 use http::header::ToStrError;
-use hyper::{self, Body, StatusCode};
+use hyper::{self, body, Body, StatusCode};
 use serde_json;
 use serde_xml_rs;
 use std;
@@ -304,12 +303,12 @@ impl From<()> for AzureError {
 #[inline]
 pub async fn extract_status_headers_and_body(
     resp: hyper::client::ResponseFuture,
-) -> Result<(hyper::StatusCode, hyper::HeaderMap, hyper::Chunk), AzureError> {
+) -> Result<(hyper::StatusCode, hyper::HeaderMap, body::Bytes), AzureError> {
     let res = resp.await?;
     let (head, body) = res.into_parts();
     let status = head.status;
     let headers = head.headers;
-    let body = body.try_concat().await?;
+    let body = body::to_bytes(body).await?;
 
     Ok((status, headers, body))
 }
@@ -318,7 +317,7 @@ pub async fn extract_status_headers_and_body(
 pub async fn check_status_extract_headers_and_body(
     resp: hyper::client::ResponseFuture,
     expected_status_code: hyper::StatusCode,
-) -> Result<(hyper::HeaderMap, hyper::Chunk), AzureError> {
+) -> Result<(hyper::HeaderMap, body::Bytes), AzureError> {
     let (status, headers, body) = extract_status_headers_and_body(resp).await?;
     if status == expected_status_code {
         Ok((headers, body))
@@ -347,7 +346,7 @@ pub async fn extract_status_and_body(
 ) -> Result<(StatusCode, String), AzureError> {
     let res = resp.await?;
     let status = res.status();
-    let body = res.into_body().try_concat().await?;
+    let body = body::to_bytes(res.into_body()).await?;
     Ok((status, str::from_utf8(&body)?.to_owned()))
 }
 
@@ -374,7 +373,7 @@ pub async fn check_status_extract_body_2(
 ) -> Result<String, AzureError> {
     let received_status = resp.status();
 
-    let body = resp.into_body().try_concat().await?;
+    let body = body::to_bytes(resp.into_body()).await?;
     let s = String::from_utf8(body.to_vec())?;
     debug!("body: {}", s);
     if received_status != expected_status {

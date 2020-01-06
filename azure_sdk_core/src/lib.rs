@@ -243,10 +243,11 @@ pub trait IfModifiedSinceSupport<'a> {
 pub trait IfModifiedSinceOption<'a> {
     fn if_modified_since(&self) -> Option<&'a DateTime<Utc>>;
 
-    fn add_header(&self, builder: &mut Builder) {
+    fn add_header(&self, mut builder: Builder) -> Builder {
         if let Some(if_modified_since) = self.if_modified_since() {
-            builder.header(IF_MODIFIED_SINCE, if_modified_since.to_rfc2822());
+            builder = builder.header(IF_MODIFIED_SINCE, if_modified_since.to_rfc2822());
         }
+        builder
     }
 }
 
@@ -258,10 +259,11 @@ pub trait UserAgentSupport<'a> {
 pub trait UserAgentOption<'a> {
     fn user_agent(&self) -> Option<&'a str>;
 
-    fn add_header(&self, builder: &mut Builder) {
+    fn add_header(&self, mut builder: Builder) -> Builder {
         if let Some(user_agent) = self.user_agent() {
-            builder.header(USER_AGENT, user_agent);
+            builder = builder.header(USER_AGENT, user_agent);
         }
+        builder
     }
 }
 
@@ -273,10 +275,11 @@ pub trait ActivityIdSupport<'a> {
 pub trait ActivityIdOption<'a> {
     fn activity_id(&self) -> Option<&'a str>;
 
-    fn add_header(&self, builder: &mut Builder) {
+    fn add_header(&self, mut builder: Builder)  -> Builder {
         if let Some(activity_id) = self.activity_id() {
-            builder.header(ACTIVITY_ID, activity_id);
+            builder = builder.header(ACTIVITY_ID, activity_id);
         }
+        builder
     }
 }
 

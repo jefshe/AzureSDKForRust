@@ -287,7 +287,7 @@ impl TableService {
                 header::ACCEPT,
                 HeaderValue::from_static(get_json_mime_nometadata()),
             );
-            request.header(header::IF_MATCH, etag);
+            request.header(header::IF_MATCH, etag)
         })?;
         check_status_extract_body(future_response, StatusCode::NO_CONTENT).await?;
         Ok(())
